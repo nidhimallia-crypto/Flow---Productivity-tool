@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flow — Your day, in order.</title>
+  <meta name="description" content="Flow brings your tasks, plans and priorities into one clear view, so you always know what to do next.">
+
+  <!-- Adds a "js" class immediately so the intro animation can start from a hidden state (no flash).
+       If JavaScript is off, everything simply shows with no animation. -->
+  <script>document.documentElement.classList.add('js');</script>
+
+  <!-- FONTS: loaded from Google Fonts (Bricolage Grotesque = headline, Inter = body, Caveat = tagline).
+       To change a font, swap the family name here AND in the "FONTS" section of the CSS below. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Caveat:wght@400..700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. SETTINGS YOU CAN EDIT
+          Everything you are likely to change (colors, fonts, sizes, spacing,
+          animation timing) lives in this one block.
+       ========================================================================== */
+    :root {
+
+      /* ---------- COLORS ---------- */
+      --bg:            #F6F3EC;  /* page background (Paper) */
+      --bg-soft:       #EBE9E3;  /* mock UI sidebar + right pane */
+      --line:          #D8D5CE;  /* rules, borders, dividers, active pill */
+      --ink-1:         #1E1B16;  /* PRIMARY text: headline, wordmark, button label */
+      --ink-2:         #3F3C37;  /* SECONDARY text: subhead, nav links, "See how it works" */
+      --ink-3:         #555452;  /* small captions inside the mock UI */
+      --coral:         #FF7553;  /* Get Started button */
+      --coral-hover:   #FF8668;  /* Get Started button on hover */
+      --sage:          #52694B;  /* tagline + checked task */
+      --sage-soft:     #7F907A;  /* completed task check */
+
+      /* ---------- FONTS ---------- */
+      --font-headline: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+      --font-body:     "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      --font-tagline:  "Caveat", "Bradley Hand", "Segoe Script", cursive;
+
+      /* ---------- TYPE SIZES ---------- */
+      --headline-size: 72px;   /* Bricolage Grotesque, Semibold (600) */
+      --headline-line: 76px;
+      --body-size:     24px;   /* Inter, Regular (400) */
+      --body-line:     28.8px;
+      --tagline-size:  36px;   /* Caveat, Semibold (600) */
+      --tagline-line:  40px;
+
+      /* ---------- GET STARTED BUTTON ---------- */
+      --cta-width:     209px;
+      --cta-height:    64px;
+      --cta-radius:    12px;
+
+      /* ---------- LAYOUT (built for a 1440px-wide screen) ---------- */
+      --edge-left:     139px;  /* left edge shared by wordmark, headline, subhead, button, tagline */
+      --edge-right:    112px;  /* distance from the right edge of the screen to the Sign Up button */
+      --rule-left:     96px;   /* where the thin line under the nav starts (kept slightly wider on purpose) */
+      --rule-right:    74px;   /* where it ends, measured from the right edge */
+      --hero-top:      110px;  /* space between the nav line and the headline: nudge the whole text block up/down */
+      --gap-headline-subhead: 24px;
+      --gap-subhead-cta:      71px;
+      --gap-cta-tagline:      96px;
+      --gap-cta-link:         72px;  /* space between Get Started and See how it works */
+      --mock-left:     812px;  /* position of the product card (from the left edge of the 1440px page) */
+      --mock-top:      251px;  /* position of the product card (from the top of the page) */
+      --mock-tilt:     -2.4deg;/* tilt of the product card. Use 0deg for no tilt */
+
+      /* ---------- ANIMATION TIMING ----------
+         All values are in milliseconds (ms). 1000ms = 1 second.
+         The order is: nav -> headline words -> subhead words -> Get Started
+         -> See how it works + product card -> tagline.                       */
+      --ease-out:          cubic-bezier(.22, .7, .2, 1);  /* the "feel" of every movement */
+
+      --nav-delay:         0ms;     /* when the top bar starts sliding in */
+      --nav-duration:      800ms;   /* how long the top bar takes to slide in */
+
+      --headline-start:    350ms;   /* when the first headline word appears */
+      --headline-stagger:  120ms;   /* gap between one headline word and the next */
+      --subhead-stagger:   35ms;    /* gap between one subhead word and the next */
+      --word-duration:     500ms;   /* how long each word takes to fade in */
+      --after-text-pause:  100ms;   /* short pause after the last subhead word, before Get Started */
+
+      --cta-duration:      500ms;   /* Get Started fade-in length */
+      --link-lag:          100ms;   /* See how it works starts this long after Get Started finishes */
+      --link-duration:     500ms;   /* See how it works fade-in length */
+      --mock-duration:     1400ms;  /* product card fade-in length (the "slow" one) */
+      --tagline-duration:  800ms;   /* tagline fade-in length */
+
+      --hover-duration:    200ms;   /* speed of the button colour change and the underline on hover */
+
+      /* ---- Timing calculations: you normally don't need to edit these 8 lines ----
+         They make each step wait for the previous one to finish.
+         (--headline-words and --subhead-words are counted automatically by the script at the bottom.) */
+      --headline-words:    4;
+      --subhead-words:     19;
+      --subhead-start:     calc(var(--headline-start) + var(--headline-words) * var(--headline-stagger));
+      --text-end:          calc(var(--subhead-start) + (var(--subhead-words) - 1) * var(--subhead-stagger) + var(--word-duration));
+      --cta-start:         calc(var(--text-end) + var(--after-text-pause));
+      --cta-end:           calc(var(--cta-start) + var(--cta-duration));
+      --link-start:        calc(var(--cta-end) + var(--link-lag));
+      --mock-start:        var(--cta-end);                                   /* card starts as soon as Get Started has appeared */
+      --tagline-start:     calc(var(--mock-start) + var(--mock-duration));   /* tagline is last: after the card has appeared */
+    }
+
+
+    /* ==========================================================================
+       2. BASE
+       ========================================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink-1);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;           /* the product card bleeds off the right edge on purpose */
+    }
+
+    h1, h2, h3, p, ul { margin: 0; padding: 0; }
+    ul { list-style: none; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Keyboard focus ring (shows only when tabbing, not on mouse click) */
+    a:focus-visible {
+      outline: 2px solid var(--ink-1);
+      outline-offset: 3px;
+    }
+
+    /* Text for screen readers only */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+
+    /* The page frame: 1440px wide, centred */
+    .page {
+      position: relative;
+      max-width: 1440px;
+      min-height: max(880px, 100vh);
+      margin: 0 auto;
+    }
+
+
+    /* ==========================================================================
+       3. TOP BAR  (wordmark, Log In, Sign Up, thin line)
+       ========================================================================== */
+    .site-header {
+      position: relative;
+      height: 116px;                /* the thin line sits in the last 2px of this */
+      z-index: 2;
+    }
+
+    .nav-row {
+      position: absolute;
+      top: 39px;
+      left: var(--edge-left);
+      right: var(--edge-right);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: 44px;
+      line-height: 1;
+      color: var(--ink-1);
+      margin-left: -3px;            /* optical alignment: the "F" has a little built-in space on its left */
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .nav-login {
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--ink-2);
+    }
+
+    .nav-signup {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 128px;
+      height: 52px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--ink-2);
+    }
+
+    /* The thin line under the top bar */
+    .rule {
+      position: absolute;
+      left: var(--rule-left);
+      right: var(--rule-right);
+      bottom: 0;
+      height: 2px;
+      background: var(--line);
+    }
+
+
+    /* ==========================================================================
+       4. HERO TEXT  (headline, subhead, buttons, tagline)
+       ========================================================================== */
+    /* (The hero is not "position: relative" on purpose, so the product card is placed from the top of the whole page.) */
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      padding: var(--hero-top) 0 0 var(--edge-left);
+    }
+
+    .headline {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--headline-size);
+      line-height: var(--headline-line);
+      color: var(--ink-1);
+      font-optical-sizing: auto;    /* Bricolage adjusts its shapes to the size. If the headline looks narrower or
+                                       wider than your design, try: font-variation-settings: "opsz" 96; */
+    }
+
+    .subhead {
+      max-width: 700px;
+      margin-top: var(--gap-headline-subhead);
+      font-weight: 400;
+      font-size: var(--body-size);
+      line-height: var(--body-line);
+      color: var(--ink-2);
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      margin-top: var(--gap-subhead-cta);
+    }
+
+    /* PRIMARY button: Get Started */
+    .cta-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--cta-width);
+      height: var(--cta-height);
+      border-radius: var(--cta-radius);
+      background: var(--coral);
+      color: var(--ink-1);
+      font-weight: 600;
+      font-size: 20px;
+      transition: background-color var(--hover-duration) ease;   /* colour shift on hover */
+    }
+    .cta-primary:hover { background: var(--coral-hover); }
+
+    /* TERTIARY link: See how it works */
+    .cta-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: var(--gap-cta-link);
+      font-weight: 500;
+      font-size: 20px;
+      color: var(--ink-2);
+    }
+    .cta-link-text {
+      text-decoration: underline;
+      text-decoration-color: transparent;   /* hidden until hover */
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+      transition: text-decoration-color var(--hover-duration) ease;
+    }
+    .cta-link:hover .cta-link-text,
+    .cta-link:focus-visible .cta-link-text { text-decoration-color: currentColor; }
+
+    .tagline {
+      max-width: 700px;
+      margin-top: var(--gap-cta-tagline);
+      margin-left: -3px;            /* optical alignment with the headline above */
+      font-family: var(--font-tagline);
+      font-weight: 600;
+      font-size: var(--tagline-size);
+      line-height: var(--tagline-line);
+      color: var(--sage);
+    }
+
+
+    /* ==========================================================================
+       5. PRODUCT CARD (mock UI)
+          The wrapper handles the fade-in. The inner ".mock" handles the tilt.
+          Everything inside is positioned in px from the card's top-left corner.
+       ========================================================================== */
+    .mock-wrap {
+      position: absolute;
+      left: var(--mock-left);
+      top: var(--mock-top);
+      width: 0;
+      height: 0;
+    }
+
+    .mock {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1100px;                /* wide on purpose: it runs off the right edge of the screen */
+      height: 590px;
+      background: var(--bg);
+      border-radius: 22px;
+      overflow: hidden;
+      transform-origin: 0 0;
+      transform: rotate(var(--mock-tilt));
+      box-shadow:
+        0 4px 9px rgba(30, 27, 22, .15),
+        0 1px 2px rgba(30, 27, 22, .10);
+    }
+
+    /* --- sidebar --- */
+    .m-side {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 168px;
+      background: var(--bg-soft);
+    }
+    .m-logo {
+      position: absolute; left: 48px; top: 27px;
+      font-family: var(--font-headline); font-weight: 600; font-size: 26px; line-height: 1;
+      color: var(--ink-1);
+    }
+    .m-nav {
+      position: absolute; left: 13px; width: 138px; height: 38px;
+      display: flex; align-items: center; gap: 11px; padding-left: 20px;
+      border-radius: 8px;
+      font-size: 12px; line-height: 1; color: var(--ink-2);
+    }
+    .m-nav.is-active { background: var(--line); color: var(--ink-1); }
+    .m-nav svg { flex: none; }
+
+    /* --- main area --- */
+    .m-main { position: absolute; left: 168px; top: 0; width: 446px; height: 100%; }
+    .m-title {
+      position: absolute; left: 34px; top: 60px;
+      font-family: var(--font-headline); font-weight: 600; font-size: 26px; line-height: 1;
+      color: var(--ink-1);
+    }
+    .m-date {
+      position: absolute; left: 37px; top: 94px;
+      font-size: 9px; line-height: 12px; color: var(--ink-3);
+    }
+    .m-input {
+      position: absolute; left: 34px; top: 134px; width: 358px; height: 35px;
+      display: flex; align-items: center; gap: 12px; padding-left: 14px;
+      border: 1.5px solid var(--line); border-radius: 8px;
+      font-size: 9px; color: var(--ink-3);
+    }
+    .m-tasks { position: absolute; left: 34px; width: 358px; }
+    .m-tasks.is-open { top: 199px; }
+    .m-tasks.is-done { top: 505px; }
+    .m-task {
+      display: flex; align-items: center; height: 53px; padding: 0 24px 0 22px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px; line-height: 1; color: var(--ink-1);
+    }
+    .m-check {
+      position: relative; flex: none; width: 16px; height: 16px; margin-right: 18px;
+      border: 1.5px solid var(--line); border-radius: 50%;
+    }
+    .m-time { margin-left: auto; font-size: 9px; color: var(--ink-3); }
+    .m-task.checked .m-check { background: var(--sage); border-color: var(--sage); }
+    .m-task.checked .m-check::after {      /* the tick mark */
+      content: ""; position: absolute; left: 3.5px; top: 0.5px; width: 4px; height: 8px;
+      border: solid var(--bg); border-width: 0 1.6px 1.6px 0; transform: rotate(45deg);
+    }
+    .m-task.checked .m-text { text-decoration: line-through; }
+    .m-tasks.is-done .m-task { color: #6F6D68; }
+    .m-tasks.is-done .m-check { background: var(--sage-soft); border-color: var(--sage-soft); }
+    .m-tasks.is-done .m-time { color: #C9C6BF; }
+    .m-completed-title {
+      position: absolute; left: 34px; top: 471px;
+      font-weight: 400; font-size: 13px; line-height: 16px; color: var(--ink-2);
+    }
+
+    /* --- empty right pane --- */
+    .m-pane { position: absolute; left: 614px; top: 0; right: 0; bottom: 0; background: var(--bg-soft); }
+
+
+    /* ==========================================================================
+       6. ANIMATION
+          Timing comes from the variables at the top of this file.
+          Elements only start hidden when JavaScript is on (the ".js" class),
+          so the page is never blank if something fails.
+       ========================================================================== */
+    @keyframes slide-down { from { transform: translateY(-100%); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes word-in    { from { transform: translateY(14px);  opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes rise-in    { from { transform: translateY(12px);  opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes card-in    { from { transform: translateY(28px);  opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes fade-in    { from { opacity: 0; } to { opacity: 1; } }
+
+    /* 1. Top bar (wordmark, Log In, Sign Up, line) slides in from the top */
+    .js .anim-nav { animation: slide-down var(--nav-duration) var(--ease-out) var(--nav-delay) both; }
+
+    /* 2. Headline + subhead: word by word (the script at the bottom wraps each word in a span) */
+    .js [data-split] { visibility: hidden; }              /* hidden until the script has split the words */
+    .js [data-split].is-split { visibility: visible; }
+    .word { display: inline-block; }
+    .js .word { animation: word-in var(--word-duration) var(--ease-out) both; }
+    .js .headline .word { animation-delay: calc(var(--headline-start) + var(--i) * var(--headline-stagger)); }
+    .js .subhead  .word { animation-delay: calc(var(--subhead-start)  + var(--i) * var(--subhead-stagger)); }
+
+    /* 3. Get Started appears after the headline and subhead are done */
+    .js .anim-cta  { animation: rise-in var(--cta-duration) var(--ease-out) var(--cta-start) both; }
+
+    /* 4. See how it works follows Get Started */
+    .js .anim-link { animation: rise-in var(--link-duration) var(--ease-out) var(--link-start) both; }
+
+    /* 5. The product card appears slowly as soon as Get Started has appeared */
+    .js .anim-card { animation: card-in var(--mock-duration) var(--ease-out) var(--mock-start) both; }
+
+    /* 6. The tagline fades in last */
+    .js .anim-tagline { animation: fade-in var(--tagline-duration) ease var(--tagline-start) both; }
+
+    /* People who ask their device to reduce motion see everything straight away */
+    @media (prefers-reduced-motion: reduce) {
+      .js .anim-nav, .js .word, .js .anim-cta, .js .anim-link, .js .anim-card, .js .anim-tagline {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .cta-primary, .cta-link-text { transition: none; }
+    }
+
+
+    /* ==========================================================================
+       7. SMALLER SCREENS (the design is for 1440px; these keep it usable)
+       ========================================================================== */
+    @media (max-width: 1100px) {
+      :root {
+        --edge-left: 56px; --edge-right: 56px; --rule-left: 32px; --rule-right: 32px;
+        --headline-size: 60px; --headline-line: 64px;
+        --gap-subhead-cta: 48px; --gap-cta-tagline: 64px;
+      }
+      .hero-copy { padding-bottom: 8px; }
+      /* the product card moves below the text and still runs off the right edge */
+      .mock-wrap { position: relative; left: 0; top: 0; width: 100%; height: 660px; margin-top: 48px; }
+      .mock { left: var(--edge-left); top: 24px; }
+    }
+
+    @media (max-width: 900px) {
+      .br-desktop { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      :root {
+        --edge-left: 24px; --edge-right: 24px; --rule-left: 12px; --rule-right: 12px;
+        --headline-size: 46px; --headline-line: 50px;
+        --body-size: 20px; --body-line: 28px;
+        --tagline-size: 28px; --tagline-line: 32px;
+        --hero-top: 64px; --gap-subhead-cta: 36px; --gap-cta-tagline: 48px;
+      }
+      .logo { font-size: 34px; }
+      .nav-links { gap: 20px; }
+      .nav-signup { width: 108px; }
+      .cta-row { flex-wrap: wrap; gap: 20px 28px; }
+      .cta-link { margin-left: 0; }
+      .mock-wrap { height: 400px; margin-top: 32px; }
+      .mock { transform: rotate(var(--mock-tilt)) scale(.6); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- ================= TOP BAR ================= -->
+    <header class="site-header anim-nav">
+      <div class="nav-row">
+        <a class="logo" href="#" aria-label="Flow home">Flow.</a>
+        <nav class="nav-links" aria-label="Account">
+          <!-- CHANGE the "#" below to your real log-in and sign-up pages -->
+          <a class="nav-login" href="#">Log In</a>
+          <a class="nav-signup" href="#">Sign Up</a>
+        </nav>
+      </div>
+      <span class="rule" aria-hidden="true"></span>
+    </header>
+
+    <!-- ================= HERO ================= -->
+    <main class="hero">
+      <div class="hero-copy">
+
+        <!-- HEADLINE: edit the words here. The line break after "day," is the <br>. -->
+        <h1 class="headline" data-split="headline">Your day,<br> in order.</h1>
+
+        <!-- SUBHEAD: edit the words here. <br class="br-desktop"> forces the line break on desktop only. -->
+        <p class="subhead" data-split="subhead">Flow brings your tasks, plans and priorities into one<br class="br-desktop"> clear view, so you always know what to do next.</p>
+
+        <div class="cta-row">
+          <!-- CHANGE the "#" to where Get Started should go (sign-up page, app, etc.) -->
+          <a class="cta-primary anim-cta" href="#">Get Started</a>
+
+          <!-- CHANGE the "#" once you decide: a video link, or "#how-it-works" to scroll to a section.
+               The arrow can be swapped later if it becomes a video (e.g. a play icon). -->
+          <a class="cta-link anim-link" href="#">
+            <span class="cta-link-text">See how it works</span>
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6h12M8 1.5 12.5 6 8 10.5"/></svg>
+          </a>
+        </div>
+
+        <!-- TAGLINE -->
+        <p class="tagline anim-tagline">Everything you need to get your work done,<br class="br-desktop"> without the noise.</p>
+      </div>
+
+      <!-- ================= PRODUCT CARD (mock UI) =================
+           This is a picture of the app, built in HTML. Edit the task names, times and date below. -->
+      <div class="mock-wrap anim-card" role="img" aria-label="Preview of Flow: the Today view showing an ordered list of tasks with times.">
+        <div class="mock">
+
+          <aside class="m-side">
+            <div class="m-logo">Flow.</div>
+
+            <div class="m-nav is-active" style="top:123px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="1.5" y="2.5" width="9" height="8" rx="1"/><path d="M1.5 5h9M4 1.5v2M8 1.5v2"/></svg>
+              Today
+            </div>
+            <div class="m-nav" style="top:174px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><circle cx="6" cy="6" r="4.8"/><path d="M6 3.4V6l1.8 1.1"/></svg>
+              Upcoming
+            </div>
+            <div class="m-nav" style="top:225px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><path d="M1.5 3.5a1 1 0 0 1 1-1h2.3l1 1.2h3.7a1 1 0 0 1 1 1v4.3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1z"/></svg>
+              Projects
+            </div>
+            <div class="m-nav" style="top:529px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><circle cx="6" cy="6" r="1.6"/><circle cx="6" cy="6" r="4.2"/><path d="M6 .8v1.4M6 9.8v1.4M.8 6h1.4M9.8 6h1.4"/></svg>
+              Settings
+            </div>
+          </aside>
+
+          <section class="m-main">
+            <h2 class="m-title">Today</h2>
+            <p class="m-date">Friday, 3rd April</p>
+
+            <div class="m-input">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" style="color:var(--ink-2)"><path d="M7 2v10M2 7h10"/></svg>
+              Start a new task
+            </div>
+
+            <ul class="m-tasks is-open">
+              <li class="m-task checked"><span class="m-check"></span><span class="m-text">Submit design assessment</span><span class="m-time">9:00 AM</span></li>
+              <li class="m-task"><span class="m-check"></span><span class="m-text">Meeting with Joe</span><span class="m-time">11:00 AM</span></li>
+              <li class="m-task"><span class="m-check"></span><span class="m-text">Edit work report</span><span class="m-time">11:35 AM</span></li>
+            </ul>
+
+            <h3 class="m-completed-title">Completed Tasks</h3>
+            <ul class="m-tasks is-done">
+              <li class="m-task checked"><span class="m-check"></span><span class="m-text">Share the old report with the manager</span><span class="m-time">9:35 AM</span></li>
+            </ul>
+          </section>
+
+          <div class="m-pane"></div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ==========================================================================
+       SCRIPT: splits the headline and subhead into words so they can appear one
+       by one, and counts the words so the timing in the CSS stays correct if
+       you change the copy. You don't need to edit this.
+       ========================================================================== -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var blocks = document.querySelectorAll('[data-split]');
+
+      Array.prototype.forEach.call(blocks, function (el) {
+        var group = el.getAttribute('data-split');          // "headline" or "subhead"
+        var plainText = el.textContent.replace(/\s+/g, ' ').trim();
+        var count = 0;
+
+        Array.prototype.slice.call(el.childNodes).forEach(function (node) {
+          if (node.nodeType !== 3) return;                  // keep <br> tags as they are
+          var frag = document.createDocumentFragment();
+          node.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            var word = document.createElement('span');
+            word.className = 'word';
+            word.setAttribute('aria-hidden', 'true');
+            word.style.setProperty('--i', count++);
+            word.textContent = part;
+            frag.appendChild(word);
+          });
+          el.replaceChild(frag, node);
+        });
+
+        // Full sentence for screen readers (the animated words above are hidden from them)
+        var sr = document.createElement('span');
+        sr.className = 'sr-only';
+        sr.textContent = plainText;
+        el.insertBefore(sr, el.firstChild);
+
+        root.style.setProperty('--' + group + '-words', count);
+        el.classList.add('is-split');
+      });
+    })();
+  </script>
+</body>
+</html>
